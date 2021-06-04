@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "lib": [ "es2015" ],
+    "target": "es6",
+    "module": "commonjs",
+    "strict": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "rootDir": "src"
+  },
+  "exclude": [
+    "dist",
+    "node_modules",
+    "examples-sdk",
+    "examples"
+  ]
+}
