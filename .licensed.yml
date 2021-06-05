@@ -12,3 +12,6 @@ allowed:
 
 reviewed:
   npm:
+    - shelljs
+    - glob
+    - fs.realpath
