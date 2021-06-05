@@ -1,0 +1,35 @@
+{
+    "resources": [{
+        "name": "Users",
+        "fieldName": "users", 
+        "fields": [{
+            "name": "_id",
+            "type": "MongoObjectID"
+        }, {
+            "name": "firstName",
+            "type": "FirstName"
+        }, {
+            "name": "lastName",
+            "type": "LastName"
+        }, {
+            "name": "email",
+            "type": "Email"
+        }, {
+            "name": "phoneNumber",
+            "type": "PhoneNumber"
+        }]
+    }],
+    "actions": [{
+        "action": "generateAndStore",
+        "storageBackend": "MongoistBackend",
+        "serializer": "JSONSerializer",
+        "configuration": {
+            "mongoURI": "mongodb://localhost:27017/users-with-mongo"
+        },
+        "generate": [{
+            "resource": "Users",
+            "collection": "users",
+            "count": 5
+        }]
+    }]
+}

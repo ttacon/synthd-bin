@@ -62,7 +62,7 @@ function camelize(str: string) {
 
 
 
-class JSONConfig {
+export class JSONConfig {
     data: string;
 
     constructor(data: string) {
