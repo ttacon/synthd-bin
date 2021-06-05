@@ -1,4 +1,9 @@
 import { updateStrings } from 'yargs';
+import { BackendInstantiation } from './backends';
+
+import {
+    BackendMap
+} from './utils';
 
 /*
 
@@ -42,6 +47,7 @@ Example file:
 
 type ResourceGeneration = {
     resource: string,
+    collection: string,
     count: number,
 };
 
@@ -88,13 +94,22 @@ class JSONConfig {
         // Determine serializer and any storage backends. These will only be
         // under the `actions` key in the config object.
         const knownSerializers: Set<string> = new Set<string>(),
-            knownBackends: Set<string> = new Set<string>();
+            knownBackends: Set<string> = new Set<string>(),
+            backendActions: Map<string, Action[]> = new Map<string, Action[]>();
         
-        for (const { serializer, storageBackend } of data.actions) {
+        for (const action of (data.actions || [])) {
+            const { serializer, storageBackend } = action;
             if (serializer) {
                 knownSerializers.add(serializer);
             }
             knownBackends.add(storageBackend);
+
+            let backendAction = backendActions.get(storageBackend);
+            if (!backendAction) {
+                backendAction = [] as Action[];
+                backendActions.set(storageBackend, backendAction);
+            }
+            backendAction.push(action);
         }
 
         if (knownSerializers.size === 0) {
@@ -137,9 +152,43 @@ const ${resource.name} = Generatable('${fieldName}', [
         }
 
         // Create storage backend.
+        let backendCodeImports = '',
+            backendCodeInstantiations = '';
+        for (const backend of knownBackends) {
+            const instantiator = BackendMap.get(backend);
+            if (!instantiator) continue;
+    
+            backendCodeImports += instantiator.importStatement();
+            for (const action of backendActions.get(backend)!) {
+                backendCodeInstantiations += instantiator.generateInstantiation(action.configuration);
+            }
+        }
+
+        buffer += "\n" + backendCodeImports;
+        buffer += backendCodeInstantiations;
+
 
         // Run storage logic.
+        //
+        // NOTE(ttacon): this straight up currently won't work for more than
+        // one backend. Work on that once we're happy with supporting a single
+        // backend properly.
+        let backendPromises = '';
+        for (const { generate } of (data.actions||[])) {
+            for (const {resource, collection, count} of generate) {
+                backendPromises += `
+    backend.store('${collection}', ${resource}.generate(${count})),`;
+            }
+        }
+        
+        if (backendPromises) {
+            buffer += `
+const finished = Promise.all([${backendPromises}
+]);
 
+finished.then(() => process.exit());
+`;
+        }
 
         return buffer;
     }
