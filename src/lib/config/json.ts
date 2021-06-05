@@ -1,5 +1,14 @@
 import { updateStrings } from 'yargs';
 import { BackendInstantiation } from './backends';
+import {
+    Config,
+
+    Action,
+    ConfigData,
+    Resource,
+    ResourceField,
+    ResourceGeneration,
+} from './definitions';
 
 import {
     BackendMap
@@ -45,35 +54,7 @@ Example file:
 }
 */
 
-type ResourceGeneration = {
-    resource: string,
-    collection: string,
-    count: number,
-};
 
-type Action = {
-    action: string,
-    storageBackend: string,
-    serializer?: string,
-    configuration: any,
-    generate: ResourceGeneration[],
-};
-
-type ResourceField = {
-    name: string,
-    type: string,
-};
-
-type Resource = {
-    name: string,
-    fieldName?: string,
-    fields: ResourceField[],
-};
-
-type ConfigData = {
-    resources: Resource[],
-    actions: Action[],
-};
 
 function camelize(str: string) {
     return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase());
@@ -201,11 +182,6 @@ finished.then(() => process.exit());
         // Run the file.
 
     }
-}
-
-interface Config {
-    generate(): string
-    run(): void
 }
 
 export default JSONConfig;
