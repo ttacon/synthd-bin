@@ -1,4 +1,5 @@
 import JSONConfig from './json';
+
 const resourceOnlyConfig = `{
     "resources": [{
         "name": "Users",
