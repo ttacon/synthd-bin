@@ -2,6 +2,9 @@
   "name": "synthd-bin",
   "version": "0.0.0",
   "description": "synthd CLI utility",
+  "bin": {
+    "synthd": "./dist/index.js"
+  },
   "main": "dist/index.js",
   "scripts": {
     "cli": "node ./dist/index.js",
