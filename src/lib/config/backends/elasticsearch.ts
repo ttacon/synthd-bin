@@ -2,6 +2,10 @@ import {
     BackendInstantiation
 } from './definitions';
 
+import {
+    importMode
+} from '../utils';
+
 type ElasticsearchInstantiationData = {
     nodeURL: string,
 };
@@ -24,7 +28,11 @@ const ${backendName} = new ElasticsearchBackend(client);`;
      * 
      * @returns string The import preamble.
      */
-    importStatement(): string {
-        return `import { Client } from '@elastic/elasticsearch';`;
+    importStatement(mode?: string): string {
+        const [
+            importPreamble,
+            modFunc,
+        ] = importMode(mode || 'cjs');
+        return `${importPreamble} { Client } ${modFunc('@elastic/elasticsearch')}`;
     }
 }

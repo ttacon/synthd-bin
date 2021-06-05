@@ -62,7 +62,7 @@ const baseConfig = `{
 
 describe('JSONConfig', () => {
     it('should generate a single resource correctly', () => {
-        const config = new JSONConfig(resourceOnlyConfig);
+        const config = new JSONConfig(resourceOnlyConfig, 'esm');
         const generated = config.generate();
 
         expect(generated).toEqual(`
@@ -76,7 +76,7 @@ import {
     Generatable
 } from 'synthd';
 
-const Users = Generatable('users', [
+const Users = new Generatable('users', [
     new MongoObjectID('_id'),
     new FirstName('firstName'),
     new LastName('lastName'),
@@ -88,7 +88,7 @@ const Users = Generatable('users', [
     });
 
     it('should generate a basic config correctly', () => {
-        const config = new JSONConfig(baseConfig);
+        const config = new JSONConfig(baseConfig, 'esm');
         const generated = config.generate();
 
         expect(generated).toEqual(`
@@ -103,7 +103,7 @@ import {
     Generatable
 } from 'synthd';
 
-const Users = Generatable('users', [
+const Users = new Generatable('users', [
     new MongoObjectID('_id'),
     new FirstName('firstName'),
     new LastName('lastName'),
@@ -114,7 +114,7 @@ const Users = Generatable('users', [
 import mongoist from 'mongoist';
 const db = mongoist('mongodb://localhost:27017/users-with-mongo');
 
-const mongoBackend = new MongoistBackend(db);
+const backend = new MongoistBackend(db);
 const finished = Promise.all([
     backend.store('users', Users.generate(5)),
 ]);

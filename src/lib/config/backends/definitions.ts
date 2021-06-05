@@ -5,7 +5,7 @@
 
 export interface BackendInstantiation {
     generateInstantiation(data: any, backendName?: string): string
-    importStatement(): string
+    importStatement(mode?: string): string
 }
 
 

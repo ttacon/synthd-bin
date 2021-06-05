@@ -145,7 +145,7 @@ const ${resource.name} = new Generatable('${fieldName}', [
             const instantiator = BackendMap.get(backend);
             if (!instantiator) continue;
     
-            backendCodeImports += instantiator.importStatement();
+            backendCodeImports += instantiator.importStatement(this.mode);
             for (const action of backendActions.get(backend)!) {
                 const backendName = action?.backendName || 'backend';
                 backendCodeInstantiations += instantiator.generateInstantiation(
