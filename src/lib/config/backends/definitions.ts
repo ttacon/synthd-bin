@@ -4,7 +4,7 @@
  */
 
 export interface BackendInstantiation {
-    generateInstantiation(data: any): string
+    generateInstantiation(data: any, backendName?: string): string
     importStatement(): string
 }
 

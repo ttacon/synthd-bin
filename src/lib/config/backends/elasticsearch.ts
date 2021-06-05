@@ -7,13 +7,13 @@ type ElasticsearchInstantiationData = {
 };
 
 export class ElasticsearchBackendInstantiation {
-    generateInstantiation(data: any): string {
+    generateInstantiation(data: any, backendName?: string): string {
         const esData = data as ElasticsearchInstantiationData;
 
         return `
 const client = new Client({ node: '${esData.nodeURL}' })
 
-const backend = new ElasticsearchBackend(client);`;
+const ${backendName} = new ElasticsearchBackend(client);`;
     }
 
     /**

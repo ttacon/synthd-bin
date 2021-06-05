@@ -11,7 +11,8 @@ import {
 } from './definitions';
 
 import {
-    BackendMap
+    BackendMap,
+    importMode,
 } from './utils';
 
 /*
@@ -64,13 +65,17 @@ function camelize(str: string) {
 
 export class JSONConfig {
     data: string;
+    mode: string;
 
-    constructor(data: string) {
+    constructor(data: string, mode?: string) {
         this.data = data;
+        this.mode = mode || 'cjs';
     }
 
     generate(): string {
         const data: ConfigData = JSON.parse(this.data);
+
+        const [importPreamble, modFunc] = importMode(this.mode);
 
         // Determine serializer and any storage backends. These will only be
         // under the `actions` key in the config object.
@@ -115,16 +120,16 @@ export class JSONConfig {
 
         // Generate the import prefices.
         buffer += `
-import {
+${importPreamble} {
     ${imports.join(',\n    ')}
-} from 'synthd';
+} ${modFunc('synthd')}
 `;
 
         // Generate resource type definitions.
         for (const resource of data.resources) {
             const fieldName = resource.fieldName ? resource.fieldName : camelize(resource.name);
             buffer += `
-const ${resource.name} = Generatable('${fieldName}', [
+const ${resource.name} = new Generatable('${fieldName}', [
     ${resource.fields.map((field) => {
         return `new ${field.type}('${field.name}')`
     }).join(',\n    ')}
@@ -134,14 +139,29 @@ const ${resource.name} = Generatable('${fieldName}', [
 
         // Create storage backend.
         let backendCodeImports = '',
-            backendCodeInstantiations = '';
+            backendCodeInstantiations = '',
+            backendPromises = '';
         for (const backend of knownBackends) {
             const instantiator = BackendMap.get(backend);
             if (!instantiator) continue;
     
             backendCodeImports += instantiator.importStatement();
             for (const action of backendActions.get(backend)!) {
-                backendCodeInstantiations += instantiator.generateInstantiation(action.configuration);
+                const backendName = action?.backendName || 'backend';
+                backendCodeInstantiations += instantiator.generateInstantiation(
+                    action.configuration,
+                    backendName,
+                );
+
+                // Run storage logic.
+                //
+                // NOTE(ttacon): this straight up currently won't work for more than
+                // one backend. Work on that once we're happy with supporting a single
+                // backend properly.
+                for (const {resource, collection, count} of action.generate) {
+                    backendPromises += `
+    ${backendName}.store('${collection}', ${resource}.generate(${count})),`;
+                }
             }
         }
 
@@ -149,19 +169,6 @@ const ${resource.name} = Generatable('${fieldName}', [
         buffer += backendCodeInstantiations;
 
 
-        // Run storage logic.
-        //
-        // NOTE(ttacon): this straight up currently won't work for more than
-        // one backend. Work on that once we're happy with supporting a single
-        // backend properly.
-        let backendPromises = '';
-        for (const { generate } of (data.actions||[])) {
-            for (const {resource, collection, count} of generate) {
-                backendPromises += `
-    backend.store('${collection}', ${resource}.generate(${count})),`;
-            }
-        }
-        
         if (backendPromises) {
             buffer += `
 const finished = Promise.all([${backendPromises}
