@@ -2,18 +2,22 @@ import {
     BackendInstantiation
 } from './definitions';
 
+import {
+    importMode
+} from '../utils';
+
 type ElasticsearchInstantiationData = {
     nodeURL: string,
 };
 
 export class ElasticsearchBackendInstantiation {
-    generateInstantiation(data: any): string {
+    generateInstantiation(data: any, backendName?: string): string {
         const esData = data as ElasticsearchInstantiationData;
 
         return `
 const client = new Client({ node: '${esData.nodeURL}' })
 
-const backend = new ElasticsearchBackend(client);`;
+const ${backendName} = new ElasticsearchBackend(client);`;
     }
 
     /**
@@ -24,7 +28,11 @@ const backend = new ElasticsearchBackend(client);`;
      * 
      * @returns string The import preamble.
      */
-    importStatement(): string {
-        return `import { Client } from '@elastic/elasticsearch';`;
+    importStatement(mode?: string): string {
+        const [
+            importPreamble,
+            modFunc,
+        ] = importMode(mode || 'cjs');
+        return `${importPreamble} { Client } ${modFunc('@elastic/elasticsearch')}`;
     }
 }

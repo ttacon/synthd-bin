@@ -14,6 +14,7 @@ export type ResourceGeneration = {
 export type Action = {
     action: string,
     storageBackend: string,
+    backendName?: string,
     serializer?: string,
     configuration: any,
     generate: ResourceGeneration[],
