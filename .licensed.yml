@@ -12,6 +12,7 @@ allowed:
 
 reviewed:
   npm:
+    - color-convert
     - shelljs
     - glob
     - fs.realpath
