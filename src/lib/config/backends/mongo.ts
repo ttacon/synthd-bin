@@ -4,7 +4,7 @@ import {
 
 import {
     importMode
-} from '../utils';
+} from '../genUtils';
 
 type MongoistInstantiationData = {
     mongoURI: string,

@@ -4,18 +4,19 @@ import {
 
 import {
     importMode
-} from '../utils';
+} from '../genUtils';
 
 type ElasticsearchInstantiationData = {
     nodeURL: string,
 };
 
 export class ElasticsearchBackendInstantiation {
-    generateInstantiation(data: any, backendName?: string): string {
+    generateInstantiation(data: any, providedBackendName?: string): string {
         const esData = data as ElasticsearchInstantiationData;
+        const backendName = providedBackendName || 'esBackend';
 
         return `
-const client = new Client({ node: '${esData.nodeURL}' })
+const client = new Client({ node: '${esData.nodeURL}' });
 
 const ${backendName} = new ElasticsearchBackend(client);`;
     }

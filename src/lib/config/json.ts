@@ -12,8 +12,11 @@ import {
 
 import {
     BackendMap,
-    importMode,
 } from './utils';
+
+import {
+    importMode,
+} from './genUtils';
 
 /*
 
@@ -179,15 +182,6 @@ finished.then(() => process.exit());
         }
 
         return buffer;
-    }
-
-    run(): void {
-        const fileData = this.generate();
-
-        // Store in a temp file.
-
-        // Run the file.
-
     }
 }
 
