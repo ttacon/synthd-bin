@@ -255,7 +255,7 @@ ${opts.join(',\n')},
                 // Run storage logic.
                 for (const {resource, collection, count} of action.generate) {
                     backendPromises.set(resource, `
-    ${backendName}.store('${collection}', ${resource}.generate(${count})),`);
+        ${backendName}.store('${collection}', ${resource}.generate(${count})),`);
                 }
             }
         }
@@ -274,15 +274,17 @@ ${opts.join(',\n')},
                     return backendPromises.get(resource);
                 });
                 storagePromiseBuf += `
-const finished${i} = Promise.all([${levelPromises}
-]);
+    await Promise.all([${levelPromises}
+    ]);
 `;
-                finishPromisesToAwait.push(`finished${i}`);
-            }
+             }
 
-            buffer += storagePromiseBuf;
             buffer += `
-Promise.all([ ${finishPromisesToAwait.join(', ')} ]).then(() => process.exit());
+function runStorage() {
+${storagePromiseBuf}
+}`;
+            buffer += `
+runStorage().then(() => process.exit());
 `;
         }
 

@@ -179,11 +179,14 @@ import mongoist from 'mongoist';
 const db = mongoist('mongodb://localhost:27017/users-with-mongo');
 
 const backend = new MongoistBackend(db);
-const finished0 = Promise.all([
-    backend.store('users', Users.generate(5)),
-]);
+function runStorage() {
 
-Promise.all([ finished0 ]).then(() => process.exit());
+    await Promise.all([
+        backend.store('users', Users.generate(5)),
+    ]);
+
+}
+runStorage().then(() => process.exit());
 `);
 
         });
@@ -227,15 +230,18 @@ import mongoist from 'mongoist';
 const db = mongoist('mongodb://localhost:27017/users-with-mongo');
 
 const backend = new MongoistBackend(db);
-const finished0 = Promise.all([
-    backend.store('users', Users.generate(5)),
-]);
+function runStorage() {
 
-const finished1 = Promise.all([
-    backend.store('sessions', Sessions.generate(20)),
-]);
+    await Promise.all([
+        backend.store('users', Users.generate(5)),
+    ]);
 
-Promise.all([ finished0, finished1 ]).then(() => process.exit());
+    await Promise.all([
+        backend.store('sessions', Sessions.generate(20)),
+    ]);
+
+}
+runStorage().then(() => process.exit());
 `);
 
         });
