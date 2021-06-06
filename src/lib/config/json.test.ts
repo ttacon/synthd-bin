@@ -179,7 +179,7 @@ import mongoist from 'mongoist';
 const db = mongoist('mongodb://localhost:27017/users-with-mongo');
 
 const backend = new MongoistBackend(db);
-function runStorage() {
+async function runStorage() {
 
     await Promise.all([
         backend.store('users', Users.generate(5)),
@@ -221,7 +221,7 @@ const Sessions = new Generatable('sessions', [
     new MongoObjectID('_id'),
     new IPAddress('ip'),
     new LinkedField('userID', {
-        obj: 'Users',
+        obj: Users,
         field: '_id',
     }),
 ]);
@@ -230,7 +230,7 @@ import mongoist from 'mongoist';
 const db = mongoist('mongodb://localhost:27017/users-with-mongo');
 
 const backend = new MongoistBackend(db);
-function runStorage() {
+async function runStorage() {
 
     await Promise.all([
         backend.store('users', Users.generate(5)),

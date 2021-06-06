@@ -223,6 +223,9 @@ const ${resource.name} = new Generatable('${fieldName}', [
         let optsBuffer = '';
         if (field.options) {
             const opts = Object.keys(field.options).map((k) => {
+                if (field.type === 'LinkedField' && k === 'obj') {
+                    return `        ${k}: ${field.options[k]}`;
+                }
                 return `        ${k}: '${field.options[k]}'`;
             });
             optsBuffer = `, {
@@ -280,7 +283,7 @@ ${opts.join(',\n')},
              }
 
             buffer += `
-function runStorage() {
+async function runStorage() {
 ${storagePromiseBuf}
 }`;
             buffer += `
