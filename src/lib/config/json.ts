@@ -75,6 +75,92 @@ export class JSONConfig {
         this.mode = mode || 'cjs';
     }
 
+    identifyResourceDependencies(resources: Resource[]): string[][] {
+        const levels: string[][] = [];
+
+        type DependencyNode = {
+            resource: string,
+            dependencies: DependencyNode[],
+        };
+        type DelayedLink = {
+            dependentOn: string,
+            depNode: DependencyNode,
+        };
+        const depMap = new Map<string, DependencyNode>(),
+            delayedLinks = new Set<DelayedLink>(),
+            topLevelNodes = new Set<string>();
+        for (const resource of resources) {
+            const newDepNode = {
+                resource: resource.name,
+                dependencies: [],  
+            };
+            topLevelNodes.add(resource.name);
+            depMap.set(resource.name, newDepNode);
+
+            for (const { type, config } of resource.fields) {
+                if (type !== 'LinkedField' || !config) {
+                    continue;
+                }
+
+                const { linkage: { obj } } = config;
+                const dependentNode = depMap.get(obj);
+                if (!dependentNode) {
+                    delayedLinks.add({
+                        dependentOn: obj,
+                        depNode: newDepNode,
+                    });
+                } else {
+                    dependentNode.dependencies.push(newDepNode);
+                }
+                topLevelNodes.delete(resource.name);
+            }
+        }
+
+        for (const { depNode, dependentOn } of delayedLinks) {
+            if (!depMap.has(dependentOn)) {
+                // DIDNTDO(ttacon): Report error.
+                continue;
+            }
+
+            depMap.get(dependentOn)?.dependencies.push(depNode);
+        }
+
+        // There is a possible world where we have some circular dependencies,
+        // but we don't support that use case at the moment. As such, we can
+        // assume that there will be at least one top-level resource.
+        for (const topLevelNode of topLevelNodes) {
+            let currLevel = 0,
+                moreLevels = true,
+                currResources = [topLevelNode];
+
+            while (moreLevels) {
+                const nextResources = [];
+                for (const resource of currResources) {
+                    // Store the current resource at the right level.
+                    if (levels.length <= currLevel) {
+                        for (let i = levels.length; i<=currLevel; i++) {
+                            levels.push([]);
+                        }
+                    }
+                    levels[currLevel].push(resource);
+
+                    // Build the next level of resources to look at.
+                    const depNode = depMap.get(resource)!;
+                    for (const dep of depNode.dependencies) {
+                        nextResources.push(dep.resource);
+                    }
+                }
+
+                // Prep for the next level, if there is one.
+                currLevel++;
+                currResources = nextResources;
+                moreLevels = nextResources.length > 0;
+            }
+        }
+
+        return levels;
+    }
+
     generate(): string {
         const data: ConfigData = JSON.parse(this.data);
 
@@ -134,8 +220,21 @@ ${importPreamble} {
             buffer += `
 const ${resource.name} = new Generatable('${fieldName}', [
     ${resource.fields.map((field) => {
-        return `new ${field.type}('${field.name}')`
-    }).join(',\n    ')}
+        let optsBuffer = '';
+        if (field.options) {
+            const opts = Object.keys(field.options).map((k) => {
+                if (field.type === 'LinkedField' && k === 'obj') {
+                    return `        ${k}: ${field.options[k]}`;
+                }
+                return `        ${k}: '${field.options[k]}'`;
+            });
+            optsBuffer = `, {
+${opts.join(',\n')},
+    }`;
+               
+        }
+        return `new ${field.type}('${field.name}'${optsBuffer})`
+    }).join(',\n    ')},
 ]);
 `;
         }
@@ -143,7 +242,7 @@ const ${resource.name} = new Generatable('${fieldName}', [
         // Create storage backend.
         let backendCodeImports = '',
             backendCodeInstantiations = '',
-            backendPromises = '';
+            backendPromises = new Map<string, string>();
         for (const backend of knownBackends) {
             const instantiator = BackendMap.get(backend);
             if (!instantiator) continue;
@@ -157,13 +256,9 @@ const ${resource.name} = new Generatable('${fieldName}', [
                 );
 
                 // Run storage logic.
-                //
-                // NOTE(ttacon): this straight up currently won't work for more than
-                // one backend. Work on that once we're happy with supporting a single
-                // backend properly.
                 for (const {resource, collection, count} of action.generate) {
-                    backendPromises += `
-    ${backendName}.store('${collection}', ${resource}.generate(${count})),`;
+                    backendPromises.set(resource, `
+        ${backendName}.store('${collection}', ${resource}.generate(${count})),`);
                 }
             }
         }
@@ -171,13 +266,28 @@ const ${resource.name} = new Generatable('${fieldName}', [
         buffer += "\n" + backendCodeImports;
         buffer += backendCodeInstantiations;
 
+        const levels = this.identifyResourceDependencies(data.resources);
 
-        if (backendPromises) {
+        if (backendPromises.size) {
+            let storagePromiseBuf = '';
+            const finishPromisesToAwait = [];
+            for (let i=0; i < levels.length; i++) {
+                const level = levels[i];
+                const levelPromises = level.map((resource) => {
+                    return backendPromises.get(resource);
+                });
+                storagePromiseBuf += `
+    await Promise.all([${levelPromises}
+    ]);
+`;
+             }
+
             buffer += `
-const finished = Promise.all([${backendPromises}
-]);
-
-finished.then(() => process.exit());
+async function runStorage() {
+${storagePromiseBuf}
+}`;
+            buffer += `
+runStorage().then(() => process.exit());
 `;
         }
 

@@ -1,4 +1,4 @@
-import { config } from "yargs";
+import { config, string } from "yargs";
 
 export interface Config {
     generate(): string
@@ -19,9 +19,20 @@ export type Action = {
     generate: ResourceGeneration[],
 };
 
+export type LinkedFieldConfig = {
+    obj: string,
+    field: string,
+};
+
+export type ResourceFieldConfig = {
+    linkage: LinkedFieldConfig,
+};
+
 export type ResourceField = {
     name: string,
     type: string,
+    config?: ResourceFieldConfig,
+    options?: any,
 };
 
 export type Resource = {
