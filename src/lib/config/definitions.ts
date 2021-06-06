@@ -2,7 +2,6 @@ import { config } from "yargs";
 
 export interface Config {
     generate(): string
-    run(): void
 }
 
 export type ResourceGeneration = {
