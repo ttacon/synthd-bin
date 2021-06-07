@@ -82,5 +82,5 @@ db.users.find({})
 The next major areas that we're looking to develop in, and feel free to contribue to are:
 
  - [ ] Schema inference (e.g. `synthd` can generate scenario files from your DB by sampling documents).
- - [ ] Schema reuse (e.g. you can include or import a common set of resource definitions).
+ - [x] Schema reuse (e.g. you can include or import a common set of resource definitions). - See `examples/json/reuse/` for an example.
  - [ ] More complicated data generation scenarios (e.g. different weights for different data types).
