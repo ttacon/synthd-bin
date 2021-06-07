@@ -20,13 +20,17 @@ export function builder(yargs: Argv) {
         file: {
             describe: 'The JSON file to run the synthd scenario from.',
             type: 'string',
+        },
+        mode: {
+            describe: 'The JS module mode.',
+            type: 'string',
         }
       });
 }
 
 type HandlerArguments = {
     file: string,
-    output: string,
+    mode: string,
 };
 
 function tmpDir(): string {
@@ -50,13 +54,16 @@ function hashedFile(data: string): string {
 }
 
 export async function handler(argv: HandlerArguments) {
-    const { file } = argv;
+    const { file, mode } = argv;
     if (!file) {
         throw new Error('must provide file');
     }
 
-    const rawFileData = fs.readFileSync(argv.file);
-    const config = new JSONConfig(rawFileData.toString());
+    const rawFileData = fs.readFileSync(file);
+    const config = new JSONConfig(rawFileData.toString(), {
+        file,
+        mode,
+    });
     const generatedData = config.generate();
 
     const storageDir = tmpDir();

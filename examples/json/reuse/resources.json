@@ -1,0 +1,48 @@
+{
+  "resources": [{
+    "name": "Users",
+    "fieldName": "users", 
+    "fields": [{
+      "name": "_id",
+      "type": "MongoObjectID"
+    }, {
+      "name": "firstName",
+      "type": "FirstName"
+    }, {
+      "name": "lastName",
+      "type": "LastName"
+    }, {
+      "name": "email",
+      "type": "Email"
+    }, {
+      "name": "phoneNumber",
+      "type": "PhoneNumber"
+    }]
+  }, {
+    "name": "Sessions",
+    "fieldName": "sessions",
+    "fields": [{
+      "name": "_id",
+      "type": "MongoObjectID"
+    }, {
+      "name": "ip",
+      "type": "IPAddress",
+      "options": {
+        "ipv6": false
+      }
+    }, {
+      "name": "userID",
+      "type": "LinkedField",
+      "config": {
+        "linkage": {
+          "obj": "Users",
+          "field": "_id"
+        }
+      },
+      "options": {
+        "obj": "Users",
+        "field": "_id"
+      }
+    }]
+  }]
+}

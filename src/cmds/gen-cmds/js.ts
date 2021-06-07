@@ -17,6 +17,10 @@ export function builder(yargs: Argv) {
             describe: 'The JSON file to generate the JS file from.',
             type: 'string',
         },
+        mode: {
+            describe: 'The JS module mode.',
+            type: 'string',
+        },
         output: {
             describe: 'Where the generate file should be output to. Input will be considered as a filename, unless `stdout` is provided.',
             type: 'string',
@@ -26,17 +30,21 @@ export function builder(yargs: Argv) {
 
 type HandlerArguments = {
     file: string,
+    mode: string,
     output: string,
 };
 
 export async function handler(argv: HandlerArguments) {
-    const {file, output} = argv;
+    const { file, mode, output } = argv;
     if (!file) {
         throw new Error('must provide file');
     }
 
-    const rawFileData = fs.readFileSync(argv.file);
-    const config = new JSONConfig(rawFileData.toString());
+    const rawFileData = fs.readFileSync(file);
+    const config = new JSONConfig(rawFileData.toString(), {
+        file,
+        mode,
+    });
     const generatedData = config.generate();
 
     if (!output || output === 'stdout') {

@@ -126,7 +126,10 @@ const linkedSessionConfig = `{
 describe('JSONConfig', () => {
     describe('generate', () => {
         it('should generate a single resource correctly', () => {
-            const config = new JSONConfig(resourceOnlyConfig, 'esm');
+            const config = new JSONConfig(resourceOnlyConfig, {
+                file: '',
+                mode: 'esm',
+            });
             const generated = config.generate();
 
             expect(generated).toEqual(`
@@ -152,7 +155,10 @@ const Users = new Generatable('users', [
         });
 
         it('should generate a basic config correctly', () => {
-            const config = new JSONConfig(baseConfig, 'esm');
+            const config = new JSONConfig(baseConfig, {
+                file: '',
+                mode: 'esm',
+            });
             const generated = config.generate();
 
             expect(generated).toEqual(`
@@ -192,7 +198,10 @@ runStorage().then(() => process.exit());
         });
 
         it('should generate a basic config correctly', () => {
-            const config = new JSONConfig(linkedSessionConfig, 'esm');
+            const config = new JSONConfig(linkedSessionConfig, {
+                file: '',
+                mode: 'esm',
+            });
             const generated = config.generate();
 
             expect(generated).toEqual(`
@@ -249,7 +258,7 @@ runStorage().then(() => process.exit());
 
     describe('identifyResourceDependencies', () => {
         it('should handle independent resources', () => {
-            const config = new JSONConfig('');
+            const config = new JSONConfig('', { file: '' });
             const levels = config.identifyResourceDependencies([{
                 name: 'Foo',
                 fieldName: 'foo',
@@ -271,7 +280,7 @@ runStorage().then(() => process.exit());
         });
 
         it('should handle a chain of resources', () => {
-            const config = new JSONConfig('');
+            const config = new JSONConfig('', { file: '' });
             const levels = config.identifyResourceDependencies([{
                 name: 'Foo',
                 fieldName: 'foo',
@@ -321,7 +330,7 @@ runStorage().then(() => process.exit());
     });
 
     it('should handle a bifurcating tree of resources', () => {
-        const config = new JSONConfig('');
+        const config = new JSONConfig('', { file: '' });
         const levels = config.identifyResourceDependencies([{
             name: 'Foo',
             fieldName: 'foo',

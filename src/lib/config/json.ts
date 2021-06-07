@@ -18,6 +18,10 @@ import {
     importMode,
 } from './genUtils';
 
+import {
+    resolverMap,
+} from './resolvers';
+
 /*
 
 Example file:
@@ -65,14 +69,19 @@ function camelize(str: string) {
 }
 
 
+type JSONConfigOptions = {
+    mode?: string,
+    file: string,
+};
 
 export class JSONConfig {
     data: string;
-    mode: string;
+    opts: JSONConfigOptions;
 
-    constructor(data: string, mode?: string) {
+    constructor(data: string, opts: JSONConfigOptions) {
         this.data = data;
-        this.mode = mode || 'cjs';
+        this.opts = opts;
+        this.opts.mode = this.opts.mode || 'cjs';
     }
 
     identifyResourceDependencies(resources: Resource[]): string[][] {
@@ -97,7 +106,7 @@ export class JSONConfig {
             topLevelNodes.add(resource.name);
             depMap.set(resource.name, newDepNode);
 
-            for (const { type, config } of resource.fields) {
+            for (const { type, config } of (resource.fields||[])) {
                 if (type !== 'LinkedField' || !config) {
                     continue;
                 }
@@ -164,7 +173,7 @@ export class JSONConfig {
     generate(): string {
         const data: ConfigData = JSON.parse(this.data);
 
-        const [importPreamble, modFunc] = importMode(this.mode);
+        const [importPreamble, modFunc] = importMode(this.opts.mode!);
 
         // Determine serializer and any storage backends. These will only be
         // under the `actions` key in the config object.
@@ -191,11 +200,30 @@ export class JSONConfig {
             knownSerializers.add('JSONSerializer');
         }
 
+        // Process the fields so that we have an index of all known fields.
+        // We also want to be able to identify any re-used fields in this block,
+        // so that we can resolve them and have them available for future use.
         const knownFields: Set<string> = new Set<string>();
         for (const resource of data.resources) {
+            if (resource.reference) {
+                const resolvedResource = this.resolveReference(resource);
+                if (!resolvedResource) {
+                    throw new Error('could not resolve reference, did not exist in end source');
+                }
+
+                // Hydrate the current resource.
+                resource.fieldName = resolvedResource.fieldName;
+                resource.fields = resolvedResource.fields;
+            }
+
+            if (!resource.fields) {
+                throw new Error('resources must provided either fields or a reference');
+            }
+
+            // Process our fields, now that we can assert that they exist.
             for (const { type } of resource.fields) {
                 knownFields.add(type);
-            }
+            }            
         }
 
         let buffer = '';
@@ -219,7 +247,7 @@ ${importPreamble} {
             const fieldName = resource.fieldName ? resource.fieldName : camelize(resource.name);
             buffer += `
 const ${resource.name} = new Generatable('${fieldName}', [
-    ${resource.fields.map((field) => {
+    ${resource.fields!.map((field) => {
         let optsBuffer = '';
         if (field.options) {
             const opts = Object.keys(field.options).map((k) => {
@@ -247,7 +275,7 @@ ${opts.join(',\n')},
             const instantiator = BackendMap.get(backend);
             if (!instantiator) continue;
     
-            backendCodeImports += instantiator.importStatement(this.mode);
+            backendCodeImports += instantiator.importStatement(this.opts.mode!);
             for (const action of backendActions.get(backend)!) {
                 const backendName = action?.backendName || 'backend';
                 backendCodeInstantiations += instantiator.generateInstantiation(
@@ -292,6 +320,16 @@ runStorage().then(() => process.exit());
         }
 
         return buffer;
+    }
+
+    resolveReference(resource: Resource): Resource|undefined {
+        const { type: referenceType, config } = resource.reference!;
+
+        const resolver = resolverMap.get(referenceType);
+        if (!resolver) {
+            return undefined;
+        }
+        return resolver.resolveReference(resource, this.opts.file);
     }
 }
 
