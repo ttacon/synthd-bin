@@ -1,0 +1,36 @@
+{
+  "resources": [{
+    "name": "Users",
+    "reference": {
+      "type": "file:local",
+      "config": {
+        "path": "./resources.json"
+      }
+    }
+  }, {
+    "name": "Sessions",
+    "reference": {
+      "type": "file:local",
+      "config": {
+        "path": "./resources.json"
+      }
+    }
+  }],
+  "actions": [{
+    "action": "generateAndStore",
+    "storageBackend": "MongoistBackend",
+    "serializer": "JSONSerializer",
+    "configuration": {
+      "mongoURI": "mongodb://localhost:27017/users-with-mongo"
+    },
+    "generate": [{
+      "resource": "Users",
+      "collection": "users",
+      "count": 5
+    }, {
+      "resource": "Sessions",
+      "collection": "sessions",
+      "count": 20
+    }]
+  }]
+}

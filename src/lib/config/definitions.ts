@@ -35,10 +35,20 @@ export type ResourceField = {
     options?: any,
 };
 
+export type LocalFileResourceReference = {
+    path: string,
+};
+
+export type ResourceReference = {
+    type: string,
+    config: any,
+};
+
 export type Resource = {
     name: string,
     fieldName?: string,
-    fields: ResourceField[],
+    fields?: ResourceField[],
+    reference?: ResourceReference,
 };
 
 export type ConfigData = {
