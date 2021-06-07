@@ -26,7 +26,10 @@
             "type": "MongoObjectID"
         }, {
             "name": "ip",
-            "type": "IPAddress"
+            "type": "IPAddress",
+            "options": {
+                "ipv6": false
+            }
         }, {
             "name": "userID",
             "type": "LinkedField",
